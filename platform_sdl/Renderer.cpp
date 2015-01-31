@@ -174,9 +174,9 @@ namespace Renderer
     SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, true );
 
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
+    SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 4 );
 
     nWidth = settings->nWidth;
     nHeight = settings->nHeight;
@@ -189,7 +189,8 @@ namespace Renderer
     if (!mWindow)
       return false;
 
-    SDL_GL_CreateContext(mWindow);
+    if (!SDL_GL_CreateContext(mWindow))
+      return false;
 
     run = true;
 
@@ -345,7 +346,8 @@ namespace Renderer
       return false;
     }
 
-    glDeleteProgram(theShader);
+    if (theShader)
+      glDeleteProgram(theShader);
 
     theShader = prg;
 
