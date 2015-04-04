@@ -80,6 +80,8 @@ int main()
   options.nFontSize = 16;
 #ifdef _WIN32
   options.sFontPath = "c:\\Windows\\Fonts\\cour.ttf";
+#elif __APPLE__
+  options.sFontPath = "/System/Library/Fonts/cour.ttf";
 #else
   options.sFontPath = "/usr/share/fonts/corefonts/cour.ttf";
 #endif

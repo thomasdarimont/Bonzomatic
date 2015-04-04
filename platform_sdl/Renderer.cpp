@@ -5,6 +5,7 @@
 #include <GLee.h>
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glu.h>
 #endif
@@ -104,7 +105,48 @@ const char * shaderBuiltin =
 namespace Renderer
 {
   char * defaultShaderFilename = "shader.glsl";
+
   char defaultShader[65536] = 
+#ifdef __APPLE__
+    "#version 120\n"
+    "\n"
+    "uniform float fGlobalTime; // in seconds\n"
+    "uniform vec2 v2Resolution; // viewport resolution (in pixels)\n"
+    "\n"
+    "uniform sampler1D texFFT; // towards 0.0 is bass / lower freq, towards 1.0 is higher / treble freq\n"
+    "uniform sampler1D texFFTSmoothed; // this one has longer falloff and less harsh transients\n"
+    "{%textures:begin%}" // leave off \n here
+    "uniform sampler2D {%textures:name%};\n"
+    "{%textures:end%}" // leave off \n here
+    "{%midi:begin%}" // leave off \n here
+    "float {%midi:name%};\n"
+    "{%midi:end%}" // leave off \n here
+    "\n"
+    "vec4 plas( vec2 v, float time )\n"
+    "{\n"
+    "  float c = 0.5 + sin( v.x * 10.0 ) + cos( sin( time + v.y ) * 20.0 );\n"
+    "  return vec4( sin(c * 0.2 + cos(time)), c * 0.15, cos( c * 0.1 + time / .4 ) * .25, 1.0 );\n"
+    "}\n"
+    "void main(void)\n"
+    "{\n"
+    "  vec2 uv = vec2(gl_FragCoord.x / v2Resolution.x, gl_FragCoord.y / v2Resolution.y);\n"
+    "  uv -= 0.5;\n"
+    "  uv /= vec2(v2Resolution.y / v2Resolution.x, 1);\n"
+    "\n"
+    "  vec2 m;\n"
+    "  m.x = atan(uv.x / uv.y) / 3.14;\n"
+    "  m.y = 1 / length(uv) * .2;\n"
+    "  float d = m.y;\n"
+    "\n"
+    "  float f = texture1D( texFFT, d ).r * 100;\n"
+    "  m.x += sin( fGlobalTime ) * 0.1;\n"
+    "  m.y += fGlobalTime * 0.25;\n"
+    "\n"
+    "  vec4 t = plas( m * 3.14, fGlobalTime ) / d;\n"
+    "  t = clamp( t, 0.0, 1.0 );\n"
+    "  gl_FragColor = f + t;\n"
+    "}";
+#else
     "#version 430 core\n"
     "\n"
     "uniform float fGlobalTime; // in seconds\n"
@@ -145,6 +187,7 @@ namespace Renderer
     "  t = clamp( t, 0.0, 1.0 );\n"
     "  out_color = f + t;\n"
     "}";
+#endif
 
   SDL_Surface * mScreen = NULL;
   bool run = true;
@@ -187,8 +230,18 @@ namespace Renderer
     SDL_EnableUNICODE(true);
     SDL_EnableKeyRepeat(250, 20);
 
-    if (settings->bVsync)
-      wglSwapIntervalEXT(1);
+    if (settings->bVsync) {
+#ifdef WIN32
+        wglSwapIntervalEXT(1);
+#elif __APPLE__
+      //not supported
+        int swap_interval = 1;
+        CGLContextObj cgl_context = CGLGetCurrentContext();
+        CGLSetParameter(cgl_context, kCGLCPSwapInterval, &swap_interval);
+#else
+        glXSwapIntervalSGI(1);
+#endif
+    }
 
     run = true;
 
