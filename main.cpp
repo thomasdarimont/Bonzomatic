@@ -39,7 +39,11 @@ void ReplaceTokens( std::string &sDefShader, const char * sTokenBegin, const cha
   }
 }
 
+#ifdef __APPLE__
+extern "C" int SDL_main(int argc, char **argv)
+#else
 int main()
+#endif
 {
   RENDERER_SETTINGS settings;
   settings.bVsync = false;
@@ -320,6 +324,8 @@ int main()
       }
     }
     Renderer::keyEventBufferCount = 0;
+
+    //printf("time: %f\n", time);
 
     Renderer::SetShaderConstant( "fGlobalTime", time );
     Renderer::SetShaderConstant( "v2Resolution", settings.nWidth, settings.nHeight );

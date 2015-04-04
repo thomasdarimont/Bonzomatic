@@ -15,6 +15,25 @@
 #include <stb_image.c>
 #include "../external/scintilla/include/Scintilla.h"
 
+void CheckOpenGLError(const char* stmt, const char* fname, int line)
+{
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+    {
+        printf("OpenGL error %08x, at %s:%i - for %s\n", err, fname, line, stmt);
+        abort();
+    }
+}
+
+//#ifdef _DEBUG
+    #define GL_CHECK(stmt) do { \
+            stmt; \
+            CheckOpenGLError(#stmt, __FILE__, __LINE__); \
+        } while (0)
+//#else
+    //#define GL_CHECK(stmt) stmt
+//#endif
+
 const char * shaderKeyword =
   "discard struct if else switch case default break goto return for while do continue";
 
@@ -208,7 +227,7 @@ namespace Renderer
     uint32_t flags = SDL_HWSURFACE|SDL_OPENGLBLIT;
     if (settings->windowMode == RENDERER_WINDOWMODE_FULLSCREEN)
       flags |= SDL_FULLSCREEN;
-
+    
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
@@ -364,6 +383,8 @@ namespace Renderer
     glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+
+    glUseProgram(theShader);
   }
   void EndFrame()
   {
@@ -378,15 +399,20 @@ namespace Renderer
     SDL_Quit();
   }
 
+
   void RenderFullscreenQuad()
   {
-    glUseProgram(theShader);
+    //glUseProgram(theShader); //use programm at the end of StartFrame() 
     glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-    glBegin(GL_QUADS);
-      glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.00f, -1.00f);
-      glTexCoord2f(1.0f, 0.0f); glVertex2f( 1.00f, -1.00f);
-      glTexCoord2f(1.0f, 1.0f); glVertex2f( 1.00f,  1.00f);
-      glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.00f,  1.00f);
+      glBegin(GL_QUADS);
+      glTexCoord2f(0.0f, 0.0f);
+      glVertex2f(-1.00f, -1.00f);
+      glTexCoord2f(1.0f, 0.0f); 
+      glVertex2f( 1.00f, -1.00f);
+      glTexCoord2f(1.0f, 1.0f); 
+      glVertex2f( 1.00f,  1.00f);
+      glTexCoord2f(0.0f, 1.0f); 
+      glVertex2f(-1.00f,  1.00f);
     glEnd();
     glUseProgram(0);
   }
@@ -430,9 +456,10 @@ namespace Renderer
   void SetShaderConstant( char * szConstName, float x )
   {
     GLint location = glGetUniformLocation( theShader, szConstName );
+
     if ( location != -1 )
     {
-      glProgramUniform1fEXT( theShader, location, x );
+      glUniform1f(location, x );
     }
   }
 
@@ -441,7 +468,7 @@ namespace Renderer
     GLint location = glGetUniformLocation( theShader, szConstName );
     if ( location != -1 )
     {
-      glProgramUniform2fEXT( theShader, location, x, y );
+      glUniform2f(location, x, y );
     }
   }
 

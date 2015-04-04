@@ -174,7 +174,7 @@ CXXFLAGS += $(foreach p,$(INCLUDEPATHS),$(addprefix -I,$p))
 
 #LDFLAGS := -lGL `pkg-config --libs sdl`
 #ifeq "$(OSTYPE)" "darwin"
-LDFLAGS := -framework OpenGL `pkg-config --libs sdl`
+LDFLAGS := -framework OpenGL -lSDLmain -lSDL `pkg-config --libs sdl`
 #endif
 
 define MAKE_RULES
